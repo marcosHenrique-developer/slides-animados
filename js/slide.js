@@ -1,90 +1,118 @@
-export default class Slides {
-  constructor(wrapper, slides) {
+export default class Slide {
+  constructor(slide, wrapper) {
+    this.slide = document.querySelector(slide);
     this.wrapper = document.querySelector(wrapper);
-    this.slides = document.querySelector(slides);
     this.dist = { finalPosition: 0, startX: 0, movement: 0 };
   }
-  moveSlide(distX) {
-    this.dist.movePosition = distX;
-    this.slides.style.transform = `translate3d(${distX}px, 0, 0)`;
+
+  transition(active) {
+    this.slide.style.transition = active ? 'transform .3s' : '';
   }
 
-  updateposition(clientX) {
+  moveSlide(distX) {
+    this.dist.movePosition = distX;
+    this.slide.style.transform = `translate3d(${distX}px, 0, 0)`;
+  }
+
+  updatePosition(clientX) {
     this.dist.movement = (this.dist.startX - clientX) * 1.6;
     return this.dist.finalPosition - this.dist.movement;
   }
 
   onStart(event) {
-    let move;
+    let movetype;
     if (event.type === 'mousedown') {
       event.preventDefault();
       this.dist.startX = event.clientX;
-      move = 'mousemove';
+      movetype = 'mousemove';
     } else {
       this.dist.startX = event.changedTouches[0].clientX;
-      move = 'touchmove';
+      movetype = 'touchmove';
     }
-    this.wrapper.addEventListener(move, this.onMove);
+    this.wrapper.addEventListener(movetype, this.onMove);
+    this.transition(false);
   }
+
   onMove(event) {
-    const poiterPosition =
+    const pointerPosition =
       event.type === 'mousemove'
         ? event.clientX
         : event.changedTouches[0].clientX;
-    const finalPosition = this.updateposition(poiterPosition);
+    const finalPosition = this.updatePosition(pointerPosition);
     this.moveSlide(finalPosition);
   }
+
   onEnd(event) {
-    const movementType = event.type === 'mouseup' ? 'mousemove' : 'touchmove';
-    this.wrapper.removeEventListener(movementType, this.onMove);
+    const movetype = event.type === 'mouseup' ? 'mousemove' : 'touchmove';
+    this.wrapper.removeEventListener(movetype, this.onMove);
     this.dist.finalPosition = this.dist.movePosition;
-  }
-  addSlidesEvents() {
-    this.wrapper.addEventListener('mousedown', this.onStart);
-    this.wrapper.addEventListener('mouseup', this.onEnd);
-    this.wrapper.addEventListener('touchstart', this.onStart);
-    this.wrapper.addEventListener('touchend', this.onEnd);
-  }
-  bindEvents() {
-    this.onStart = this.onStart.bind(this);
-    this.onEnd = this.onEnd.bind(this);
-    this.onMove = this.onMove.bind(this);
+    this.transition(true);
+    this.changeSlideOnEnd();
   }
 
-  slidesPosition(slide) {
+  changeSlideOnEnd() {
+    if (this.dist.movement > 120 && this.index.next !== undefined) {
+      this.nextSlide();
+    } else if (this.dist.movement < -120 && this.index.prev !== undefined) {
+      this.prevSlide();
+    } else {
+      this.changeSlide(this.index.active);
+    }
+  }
+
+  addSlideEvents() {
+    this.wrapper.addEventListener('mousedown', this.onStart);
+    this.wrapper.addEventListener('touchstart', this.onStart);
+    this.wrapper.addEventListener('mouseup', this.onEnd);
+    this.wrapper.addEventListener('touchend', this.onEnd);
+  }
+
+  bindEvents() {
+    this.onStart = this.onStart.bind(this);
+    this.onMove = this.onMove.bind(this);
+    this.onEnd = this.onEnd.bind(this);
+  }
+
+  slidePosition(slide) {
     const margin = (this.wrapper.offsetWidth - slide.offsetWidth) / 2;
     return -(slide.offsetLeft - margin);
   }
 
   slidesConfig() {
-    this.slidesArray = [...this.slides.children].map((element) => {
-      const position = this.slidesPosition(element);
-      return {
-        position,
-        element,
-      };
+    this.slideArray = [...this.slide.children].map((element) => {
+      const position = this.slidePosition(element);
+      return { position, element };
     });
   }
 
-  slidesNav(index) {
-    const last = this.slidesArray.length - 1;
+  slidesIndexNav(index) {
+    const last = this.slideArray.length - 1;
     this.index = {
       prev: index ? index - 1 : undefined,
       active: index,
-      next: index === last ? undefined : index - 1,
+      next: index === last ? undefined : index + 1,
     };
   }
 
-  changedSlides(index) {
-    const activeSlide = this.slidesArray[index];
+  changeSlide(index) {
+    const activeSlide = this.slideArray[index];
     this.moveSlide(activeSlide.position);
-    this.slidesNav(index);
-    this.dist.finalPosition = activeSlide;
+    this.slidesIndexNav(index);
+    this.dist.finalPosition = activeSlide.position;
+  }
+
+  prevSlide() {
+    if (this.index.prev !== undefined) this.changeSlide(this.index.prev);
+  }
+
+  nextSlide() {
+    if (this.index.next !== undefined) this.changeSlide(this.index.next);
   }
 
   init() {
     this.bindEvents();
-    this.addSlidesEvents();
+    this.transition(true);
+    this.addSlideEvents();
     this.slidesConfig();
     return this;
   }

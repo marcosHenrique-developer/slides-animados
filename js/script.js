@@ -1,4 +1,7 @@
-import Slides from './slide.js';
+import Slide from './slide.js';
 
-const slides = new Slides('.wrapper', '.slides');
-slides.init();
+const slide = new Slide('.slide', '.slide-wrapper');
+slide.init();
+
+slide.changeSlide(0);
+slide.nextSlide();
