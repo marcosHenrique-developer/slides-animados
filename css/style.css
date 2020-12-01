@@ -1,22 +1,27 @@
 body {
   margin: 0px;
 }
+
 ul {
   padding: 0px;
   margin: 0px;
   list-style: none;
 }
+
 img {
   display: block;
-  width: 100%;
+  max-width: 100%;
 }
-.wrapper {
+
+.slide-wrapper {
   overflow: hidden;
 }
-.slides {
+
+.slide {
   display: flex;
 }
-.slides li {
+
+.slide li {
   flex-shrink: 0;
   width: 80vw;
   max-width: 800px;
